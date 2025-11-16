@@ -1,4 +1,3 @@
-# chainlit_ui.py
 import os
 import json
 from typing import Dict, Any
