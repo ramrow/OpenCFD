@@ -1,6 +1,5 @@
 # OpenCFD
 
-![OpenCFD Logo](OpenCFD-logo.png)
 OpenCFD is a web-based platform that uses the open-source Foam-Agent framework to run end-to-end CFD (Computational Fluid Dynamics) simulations from a single text prompt.
 
 ## 💡 Inspiration
