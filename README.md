@@ -64,22 +64,24 @@ The backend runs inside a Docker container.
 # 1. Pull the pre-built Docker image
 docker pull leoyue123/foamagent
 
-# 2. Run the container for the first time
+# 2. docker cp ./adapter.py Foam-Agent:<PATH TO YOUR REPOSITORY.
+
+# 3. Run the container for the first time
 # This names the container 'opencfd', sets your API key, and maps port 7860
 docker run -it -e OPENAI_API_KEY='YOUR-OPENAI-KEY-HERE' -p 7860:7860 --name opencfd leoyue123/foamagent
 
-# 3. (First time only, inside the container) Initialize Conda
+# 4. (First time only, inside the container) Initialize Conda
 # You should now be at the container's shell prompt
 conda init
 exit
 
-# 4. Restart the container for conda changes to take effect
+# 5. Restart the container for conda changes to take effect
 docker start -i opencfd
 
-# 5. (Inside the container) Activate the FoamAgent environment
+# 6. (Inside the container) Activate the FoamAgent environment
 conda activate FoamAgent
 
-# 6. (Inside the container) Run the backend adapter
+# 7. (Inside the container) Run the backend adapter
 python adapter.py
 ````
 
