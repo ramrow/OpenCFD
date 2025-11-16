@@ -1,13 +1,50 @@
-# app.py
 from flask import Flask, request, jsonify
 import subprocess
 import os
+from pathlib import Path
+from typing import Dict, Any
 
 app = Flask(__name__)
 
 USER_REQ_PATH = "./user_requirement.txt"
 OUTPUT_DIR = "./output"
 
+def build_file_tree(root_dir: str) -> Dict[str, Any]:
+    """
+    Recursively scan root_dir and return a nested dict:
+    {
+        "case1": {
+            "0": { "U": "uniform (0 0 0);", ... },
+            "system": { "controlDict": "..." }
+        }
+    }
+    """
+    root = Path(root_dir)
+    if not root.exists():
+        return {"_error": "Output directory does not exist"}
+
+    tree: Dict[str, Any] = {}
+
+    # Walk through all files
+    for file_path in sorted(root.rglob("*")):
+        if file_path.is_file():
+            rel_path = file_path.relative_to(root)
+            parts = rel_path.parts
+
+            current = tree
+            for part in parts[:-1]:
+                current = current.setdefault(part, {})
+
+            try:
+                content = file_path.read_text(encoding="utf-8", errors="replace")
+                # Truncate very long files
+                if len(content) > 5000:
+                    content = content[:5000] + "\n\n... [TRUNCATED]"
+                current[rel_path.name] = content
+            except Exception as e:
+                current[rel_path.name] = f"<ERROR READING FILE: {e}>"
+
+    return tree
 
 @app.route("/run_foambench", methods=["POST"])
 def run_foambench():
@@ -60,15 +97,17 @@ def run_foambench():
     print(result.stderr)
     print("=====================================\n")
 
-    # 5. Return the results, including output_dir
-    return jsonify(
-        {
-            "returncode": result.returncode,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "output_dir": os.path.abspath(OUTPUT_DIR),
-        }
-    ), 500
+    files_tree = build_file_tree(OUTPUT_DIR)
+    response_data = {
+        "returncode": result.returncode,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "output_dir": files_tree,
+    }
+
+    status_code = 200 if result.returncode == 0 else 500
+    return jsonify(response_data), status_code
+
 
 
 if __name__ == "__main__":
