@@ -24,7 +24,34 @@ We use **Conda** to manage dependencies and ensure reproducibility.
 ### 1. Create the Conda Environment
 
 ```bash
-conda create --name <env_name> python=3.12
+conda env create --file environment.yml
 ```
+```bash
+conda activate website
+```
+### 2. Pull Docker Container
+
+A docker image for Foam-Agent https://github.com/csml-rpi/Foam-Agent.
+1. To pull the image, do
+`docker pull leoyue123/foamagent`
+2. Afterwards, do
+`docker run -it -e OPENAI_API_KEY=your-key-here -p 7860:7860 --name foamagent leoyue123/foamagent`
+to run a container with an interactive terminal.
+3. Once the terminal starts, do
+`conda init`
+to initialize conda for shell interaction.
+4. `exit` for the changes to take effect (steps 3 and 4 only need to be done once).
+5. Restart the container by
+`docker start -i foamagent`
+6. Activate the FoamAgent environment:
+`conda activate FoamAgent`
+7. Set your OpenAI key: `export OPENAI_API_KEY=<your-openai-key>`
+8. To run backend: `python adapter.py`
+
+
+
+
+
+
 
 
