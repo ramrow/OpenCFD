@@ -35,18 +35,29 @@ A docker image for Foam-Agent https://github.com/csml-rpi/Foam-Agent.
 1. To pull the image, do
 `docker pull leoyue123/foamagent`
 2. Afterwards, do
-`docker run -it -e OPENAI_API_KEY=your-key-here -p 7860:7860 --name foamagent leoyue123/foamagent`
+`docker run -it -e OPENAI_API_KEY=your-key-here -p 7860:7860 --name opencfd leoyue123/foamagent`
 to run a container with an interactive terminal.
-3. Once the terminal starts, do
+  1. Set your OpenAI key: `export OPENAI_API_KEY=<your-openai-key>`
+3. Start/restart the container by
+`docker start -i foamagent`
+4. Once the terminal starts, do
 `conda init`
 to initialize conda for shell interaction.
-4. `exit` for the changes to take effect (steps 3 and 4 only need to be done once).
-5. Restart the container by
+5. `exit` for the changes to take effect (steps 3 and 4 only need to be done once).
+6. Restart the container by
 `docker start -i foamagent`
-6. Activate the FoamAgent environment:
+7. Activate the FoamAgent environment:
 `conda activate FoamAgent`
-7. Set your OpenAI key: `export OPENAI_API_KEY=<your-openai-key>`
 8. To run backend: `python adapter.py`
+
+### 3. Set up Chain-lit
+
+To initialize the app:
+```bash
+chainlit run web.py -w
+```
+Then go to  `http://localhost:8000/` and type in your user_requirement.
+
 
 
 
