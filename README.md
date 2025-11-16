@@ -1,59 +1,101 @@
 # OpenCFD
 
-OpenCFD is a web-based platform that uses the open-source Foam-Agent framework to run end-to-end CFD simulations from a single text prompt.
+OpenCFD is a web-based platform that uses the open-source Foam-Agent framework to run end-to-end CFD (Computational Fluid Dynamics) simulations from a single text prompt.
 
-A user simply types what they want to simulate (e.g., "Simulate incompressible flow over a circular cylinder... using gmsh to create the mesh"). Our backend, powered by Foam-Agent, then orchestrates a team of specialized AI agents to handle the entire complex workflow:
+## 💡 Inspiration
 
-1. Architect Agent: First, this agent plans the entire simulation, defining the required directory structure and file dependencies.
-2. Meshing Agent: This agent automatically generates the computational mesh. It is incredibly versatile, supporting text-to-mesh generation via the Gmsh library, importing external user-provided meshes, or using OpenFOAM's native tools.
-3. Input Writer Agent: This agent generates all the complex OpenFOAM configuration files. Crucially, it writes them in a "dependency-aware sequence" (e.g., system files first, then constant, then 0 files) to ensure consistency and reduce errors.
-4. Runner Agent: This agent executes the simulation. For this hackathon, we run it locally, but the framework is designed to automatically generate Slurm scripts and submit jobs to HPC clusters.
-5. Reviewer Agent: This is the most critical part. If the simulation fails, the Runner Agent extracts the error logs. The Reviewer Agent then analyzes the error and automatically proposes a fix. The system then re-runs the simulation in an iterative loop until it succeeds.
-6. Visualization Agent: Finally, this agent generates plots and visualizations (like velocity fields) from the results, again based on the user's prompt.
+Traditional CFD software has a very steep learning curve, often requiring weeks of training to use effectively. We were inspired by the power of Large Language Models (LLMs) to automate complex scientific workflows. Our goal is to make CFD accessible to everyone, from students to professional researchers, through natural language descriptions.
 
----
+## 🚀 What it Does
 
-A Chainlit-based frontend that sends user requirements to a Flask backend, which runs `foambench_main.py` to generate OpenFOAM cases.
+A user simply types what they want to simulate (e.g., "Simulate incompressible flow over a circular cylinder... using gmsh to create the mesh"). Our backend, powered by **Foam-Agent**, then orchestrates a team of specialized AI agents to handle the entire complex workflow:
 
----
+1.  **Architect Agent:** First, this agent plans the entire simulation, defining the required directory structure and file dependencies.
+2.  **Meshing Agent:** This agent automatically generates the computational mesh. It is incredibly versatile, supporting text-to-mesh generation via the Gmsh library, importing external user-provided meshes, or using OpenFOAM's native tools.
+3.  **Input Writer Agent:** This agent generates all the complex OpenFOAM configuration files. Crucially, it writes them in a "dependency-aware sequence" (e.g., system files first, then constant, then 0 files) to ensure consistency and reduce errors.
+4.  **Runner Agent:** This agent executes the simulation. For this hackathon, we run it locally, but the framework is designed to automatically generate Slurm scripts and submit jobs to HPC clusters.
+5.  **Reviewer Agent:** This is the most critical part. If the simulation fails, the Runner Agent extracts the error logs. The Reviewer Agent then analyzes the error and automatically proposes a fix. The system then re-runs the simulation in an iterative loop until it succeeds.
+6.  **Visualization Agent:** Finally, this agent generates plots and visualizations (like velocity fields) from the results, again based on the user's prompt.
 
-## Setup: Create & Activate Conda Environment
+## 🖥️ Demo
 
-We use **Conda** to manage dependencies and ensure reproducibility.
+![Website Demo 1](website_demo1.png)
+![Website Demo 2](website_demo2.png)
+![Website Demo 3](website_demo3.png)
 
-### 1. Create the Conda Environment
+## 🛠️ How We Built It (Tech Stack)
+
+* **Core Framework:** [Foam-Agent](https://github.com/csml-rpi/Foam-Agent) - An agent-based open-source framework for coordinating simulation workflows.
+* **Backend:** [Flask](https://flask.palletsprojects.com/) - Serves as an adapter between the frontend and the Foam-Agent backend.
+* **Frontend:** [Chainlit](https://chainlit.io/) - Used to rapidly build the user-friendly chat interface.
+* **Simulation Engine:** [OpenFOAM](https://www.openfoam.com/) - As the core CFD solver.
+* **Meshing:** [Gmsh](https://gmsh.info/) - Used for text-to-mesh generation.
+* **Environment:** [Docker](https://www.docker.com/) & [Conda](https://docs.conda.io/en/latest/) - For managing dependencies and ensuring reproducibility.
+
+## ⚙️ Setup & Installation
+
+The setup is divided into two main parts: the **Backend** (running Foam-Agent in Docker) and the **Frontend** (running Chainlit in a local Conda environment).
+
+### 1. Backend: Docker & Foam-Agent
+
+The backend runs inside a Docker container.
 
 ```bash
+# 1. Pull the pre-built Docker image
+docker pull leoyue123/foamagent
+
+# 2. Run the container for the first time
+# This names the container 'opencfd', sets your API key, and maps port 7860
+docker run -it -e OPENAI_API_KEY='YOUR-OPENAI-KEY-HERE' -p 7860:7860 --name opencfd leoyue123/foamagent
+
+# 3. (First time only, inside the container) Initialize Conda
+# You should now be at the container's shell prompt
+conda init
+exit
+
+# 4. Restart the container for conda changes to take effect
+docker start -i opencfd
+
+# 5. (Inside the container) Activate the FoamAgent environment
+conda activate FoamAgent
+
+# 6. (Inside the container) Run the backend adapter
+python adapter.py
+````
+
+**Maintenance Tips:**
+
+  * To stop the backend, press `Ctrl+C` in the terminal where `adapter.py` is running, then type `exit` to leave the container.
+  * To restart the backend next time, just run:
+    ```bash
+    docker start -i opencfd
+    ```
+  * Then, run steps 5 and 6 again inside the container.
+
+### 2\. Frontend: Conda & Chainlit
+
+Open a **new terminal** window on **your local machine** (**not** in the Docker container) to set up the frontend.
+
+```bash
+# 1. (Assuming you have cloned this repo) Create the Conda environment
 conda env create --file environment.yml
-```
-```bash
+
+# 2. Activate the environment
 conda activate website
-```
-### 2. Pull Docker Container
 
-A docker image for Foam-Agent https://github.com/csml-rpi/Foam-Agent.
-1. To pull the image, do
-`docker pull leoyue123/foamagent`
-2. Afterwards, do
-`docker run -it -e OPENAI_API_KEY=your-key-here -p 7860:7860 --name opencfd leoyue123/foamagent`
-to run a container with an interactive terminal.
-  1. Set your OpenAI key: `export OPENAI_API_KEY=<your-openai-key>`
-3. Start/restart the container by
-`docker start -i foamagent`
-4. Once the terminal starts, do
-`conda init`
-to initialize conda for shell interaction.
-5. `exit` for the changes to take effect (steps 3 and 4 only need to be done once).
-6. Restart the container by
-`docker start -i foamagent`
-7. Activate the FoamAgent environment:
-`conda activate FoamAgent`
-8. To run backend: `python adapter.py`
-
-### 3. Set up Chain-lit
-
-To initialize the app:
-```bash
+# 3. Run the Chainlit app
+# The -w flag auto-reloads when you save file changes
 chainlit run web.py -w
 ```
-Then go to  `http://localhost:8000/` and type in your user_requirement.
+
+### 3\. Access the App
+
+Open your browser and go to `http://localhost:8000/`. You can now start typing your simulation requirements\!
+
+## 🛣️ What's Next
+
+  * **HPC Integration:** Finalize the automatic job submission (Slurm script generation) integration with HPC clusters.
+  * **More Solvers:** Expand the framework to support more CFD solvers and meshing tools beyond OpenFOAM.
+  * **UI Enhancements:** Improve the visualization interface to allow for more complex user interaction and results analysis.
+
+<!-- end list -->
